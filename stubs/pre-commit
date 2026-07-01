@@ -1,0 +1,51 @@
+#!/bin/sh
+# API Contract pre-commit hook — managed by ssdev/laravel-api-contracts
+# Warns about API routes with no contract snapshot coverage.
+# Does NOT block commits — it only informs.
+
+ROUTE_PREFIX="{{ROUTE_PREFIX}}"
+
+find_php() {
+    if command -v php >/dev/null 2>&1; then
+        echo "php"
+        return
+    fi
+    if command -v cmd >/dev/null 2>&1; then
+        if cmd //c php -r "echo 1;" >/dev/null 2>&1; then
+            echo "cmd //c php"
+            return
+        fi
+    fi
+    for dir in \
+        "$USERPROFILE/.config/herd/bin/php84" \
+        "$USERPROFILE/.config/herd/bin/php83" \
+        "$HOME/.config/herd/bin/php84" \
+        "$HOME/.config/herd/bin/php83"; do
+        dir_unix=$(echo "$dir" | sed 's|\\|/|g' | sed 's|^\([A-Za-z]\):|/\L\1|')
+        if [ -f "$dir_unix/php.exe" ]; then
+            echo "$dir_unix/php.exe"
+            return
+        fi
+    done
+    echo ""
+}
+
+PHP=$(find_php)
+
+if [ -z "$PHP" ]; then
+    exit 0
+fi
+
+OUTPUT=$($PHP artisan api:contract:coverage --prefix="$ROUTE_PREFIX" 2>&1)
+EXIT_CODE=$?
+
+# Only print output if there are uncovered routes (non-zero exit or output contains warnings)
+if echo "$OUTPUT" | grep -q "have no contract snapshot"; then
+    echo ""
+    echo "  [api:contract] Coverage warning:"
+    echo "$OUTPUT" | grep -E "→|Run" | sed 's/^/  /'
+    echo "  (this is a warning only — commit is not blocked)"
+    echo ""
+fi
+
+exit 0

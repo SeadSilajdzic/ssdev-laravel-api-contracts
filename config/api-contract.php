@@ -20,12 +20,17 @@ return [
 
     /*
      * Environment variable name that triggers snapshot writing instead of asserting.
-     * Set to '1' to regenerate snapshots: API_CONTRACT_UPDATE=1 php artisan test ...
      */
     'update_env' => 'API_CONTRACT_UPDATE',
 
     /*
-     * Path (relative to base_path()) where the pre-push git hook is installed.
+     * URI prefix used by api:contract:generate and api:contract:coverage.
+     * The pre-commit hook uses this to scan for uncovered routes.
+     */
+    'route_prefix' => 'api',
+
+    /*
+     * Path (relative to base_path()) where git hooks are installed.
      */
     'hooks_dir' => '.githooks',
 ];

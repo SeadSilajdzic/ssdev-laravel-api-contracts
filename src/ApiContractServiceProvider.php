@@ -3,6 +3,8 @@
 namespace Ssdev\ApiContracts;
 
 use Illuminate\Support\ServiceProvider;
+use Ssdev\ApiContracts\Commands\ApiContractCoverageCommand;
+use Ssdev\ApiContracts\Commands\ApiContractGenerateCommand;
 use Ssdev\ApiContracts\Commands\ApiContractInstallCommand;
 use Ssdev\ApiContracts\Commands\ApiContractUpdateCommand;
 
@@ -23,6 +25,8 @@ class ApiContractServiceProvider extends ServiceProvider
             $this->commands([
                 ApiContractInstallCommand::class,
                 ApiContractUpdateCommand::class,
+                ApiContractGenerateCommand::class,
+                ApiContractCoverageCommand::class,
             ]);
         }
     }
