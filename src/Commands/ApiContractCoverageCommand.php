@@ -3,6 +3,7 @@
 namespace Ssdev\ApiContracts\Commands;
 
 use Illuminate\Console\Command;
+use Ssdev\ApiContracts\ApiContractSnapshot;
 
 class ApiContractCoverageCommand extends Command
 {
@@ -22,8 +23,8 @@ class ApiContractCoverageCommand extends Command
             return self::SUCCESS;
         }
 
-        $coveredUris = array_keys($manifest['routes'] ?? []);
-        $uncovered   = [];
+        $routeToSnapshotKey = $manifest['routes'] ?? [];
+        $uncovered          = [];
 
         foreach (app('router')->getRoutes() as $route) {
             $uri = $route->uri();
@@ -35,8 +36,10 @@ class ApiContractCoverageCommand extends Command
             $methods = array_diff($route->methods(), ['HEAD', 'OPTIONS']);
 
             foreach ($methods as $method) {
-                $key = strtoupper($method) . ' /' . $uri;
-                if (!in_array($key, $coveredUris, true)) {
+                $key         = strtoupper($method) . ' /' . $uri;
+                $snapshotKey = $routeToSnapshotKey[$key] ?? null;
+
+                if ($snapshotKey === null || !ApiContractSnapshot::exists($snapshotKey)) {
                     $uncovered[] = $key;
                 }
             }

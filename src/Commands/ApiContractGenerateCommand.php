@@ -29,6 +29,14 @@ class ApiContractGenerateCommand extends Command
             return self::FAILURE;
         }
 
+        if (!$this->pestAvailable()) {
+            $this->warn('Pest was not detected in this project.');
+            $this->line('  The generated test file uses Pest syntax (uses()/it()) and will not run without it.');
+            $this->line('  Install it with: <comment>composer require pestphp/pest --dev</comment>');
+            $this->line('  ...or write PHPUnit tests manually — see the README "Writing tests manually" section.');
+            $this->newLine();
+        }
+
         $merge = $this->option('merge');
         $force = $this->option('force');
 
@@ -74,6 +82,11 @@ class ApiContractGenerateCommand extends Command
         $this->line('  3. Run: <comment>php artisan api:contract:update</comment>');
 
         return self::SUCCESS;
+    }
+
+    private function pestAvailable(): bool
+    {
+        return function_exists('uses') && function_exists('it');
     }
 
     private function discoverRoutes(string $prefix): array
@@ -222,13 +235,23 @@ class ApiContractGenerateCommand extends Command
         $status      = $route['method'] === 'POST' ? 201 : 200;
         $bodyArg     = in_array($route['method'], ['POST', 'PUT', 'PATCH']) ? ", [\n//         // TODO: request body\n//     ]" : '';
 
-        return [
-            "// it('{$testName} matches contract', function () {",
-            "//     \$response = \$this->withHeaders(contractHeaders())->{$method}Json('{$phpUri}'{$bodyArg});",
-            "//     \$response->assertStatus({$status});",
-            "//     \$this->assertMatchesApiContract('{$snapshotKey}', \$response->json());",
-            "// });",
-        ];
+        $lines = ["// it('{$testName} matches contract', function () {"];
+
+        if ($route['has_params']) {
+            preg_match_all('/\{([^}]+)\}/', $route['uri'], $matches);
+            foreach ($matches[1] as $param) {
+                $lines[] = "//     \${$param} = 1; // TODO: replace with a valid {$param}";
+            }
+        }
+
+        $uriCode = $route['has_params'] ? "\"{$phpUri}\"" : "'{$phpUri}'";
+
+        $lines[] = "//     \$response = \$this->withHeaders(contractHeaders())->{$method}Json({$uriCode}{$bodyArg});";
+        $lines[] = "//     \$response->assertStatus({$status});";
+        $lines[] = "//     \$this->assertMatchesApiContract('{$snapshotKey}', \$response->json());";
+        $lines[] = '// });';
+
+        return $lines;
     }
 
     private function mergeIntoExistingFile(string $outputPath, array $newRoutes, array $manifest): void

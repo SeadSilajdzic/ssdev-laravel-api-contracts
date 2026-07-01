@@ -76,7 +76,12 @@ echo " If ACCIDENTAL:  fix the code before pushing."
 echo "-----------------------------------------------------------------------"
 echo ""
 printf "Accept these changes and update snapshots now? (y/N) "
-read -r ANSWER </dev/tty
+if [ -r /dev/tty ]; then
+    read -r ANSWER </dev/tty
+else
+    ANSWER="n"
+    echo "(no interactive terminal detected — skipping prompt)"
+fi
 
 if [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ]; then
     echo ""

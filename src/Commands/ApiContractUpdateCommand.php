@@ -36,6 +36,15 @@ class ApiContractUpdateCommand extends Command
             return self::SUCCESS;
         }
 
+        $output = $process->getOutput() . $process->getErrorOutput();
+        if (str_contains($output, 'undefined function uses()') || str_contains($output, 'undefined function it(')) {
+            $this->newLine();
+            $this->error('Pest is not installed, but the contract test file uses Pest syntax (uses()/it()).');
+            $this->line('  Install it with: <comment>composer require pestphp/pest --dev</comment>');
+            $this->line('  ...or rewrite the test file for PHPUnit — see the README "Writing tests manually" section.');
+            return self::FAILURE;
+        }
+
         $this->error('Snapshot update failed — check the test output above.');
         return self::FAILURE;
     }

@@ -44,12 +44,16 @@ trait InteractsWithApiContract
 
         $breaking  = ApiContractSnapshot::hasBreakingViolations($violations);
         $formatted = ApiContractSnapshot::formatViolations($violations);
-        $label     = $breaking ? 'BREAKING API contract violation' : 'API contract changed (new fields)';
         $command   = 'php artisan api:contract:update';
 
-        $this->assertEmpty(
-            $violations,
-            "\n\n  [{$name}] {$label}:\n{$formatted}\n\n  → Run: {$command}  (to accept intentional changes)\n"
+        if (!$breaking) {
+            fwrite(STDOUT, "\n  [{$name}] API contract changed (new fields):\n{$formatted}\n");
+            $this->assertTrue(true);
+            return;
+        }
+
+        $this->fail(
+            "\n\n  [{$name}] BREAKING API contract violation:\n{$formatted}\n\n  → Run: {$command}  (to accept intentional changes)\n"
         );
     }
 }
