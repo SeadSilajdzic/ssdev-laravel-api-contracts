@@ -1,6 +1,6 @@
 <?php
 
-namespace Sead\ApiContract;
+namespace Ssdev\ApiContracts;
 
 class ApiContractSnapshot
 {

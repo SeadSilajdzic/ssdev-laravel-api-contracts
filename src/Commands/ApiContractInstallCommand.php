@@ -1,6 +1,6 @@
 <?php
 
-namespace Sead\ApiContract\Commands;
+namespace Ssdev\ApiContracts\Commands;
 
 use Illuminate\Console\Command;
 

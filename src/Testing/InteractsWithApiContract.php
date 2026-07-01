@@ -1,17 +1,17 @@
 <?php
 
-namespace Sead\ApiContract\Testing;
+namespace Ssdev\ApiContracts\Testing;
 
-use Sead\ApiContract\ApiContractSnapshot;
+use Ssdev\ApiContracts\ApiContractSnapshot;
 
 /**
  * Add to any Pest/PHPUnit test class to get assertMatchesApiContract().
  *
  * Pest usage:
- *   uses(\Sead\ApiContract\Testing\InteractsWithApiContract::class);
+ *   uses(\Ssdev\ApiContracts\Testing\InteractsWithApiContract::class);
  *
  * PHPUnit usage:
- *   use \Sead\ApiContract\Testing\InteractsWithApiContract;
+ *   use \Ssdev\ApiContracts\Testing\InteractsWithApiContract;
  */
 trait InteractsWithApiContract
 {

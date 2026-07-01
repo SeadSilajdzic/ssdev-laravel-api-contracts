@@ -1,10 +1,10 @@
 <?php
 
-namespace Sead\ApiContract;
+namespace Ssdev\ApiContracts;
 
 use Illuminate\Support\ServiceProvider;
-use Sead\ApiContract\Commands\ApiContractInstallCommand;
-use Sead\ApiContract\Commands\ApiContractUpdateCommand;
+use Ssdev\ApiContracts\Commands\ApiContractInstallCommand;
+use Ssdev\ApiContracts\Commands\ApiContractUpdateCommand;
 
 class ApiContractServiceProvider extends ServiceProvider
 {
