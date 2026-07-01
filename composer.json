@@ -1,0 +1,40 @@
+{
+    "name": "sead/laravel-api-contract",
+    "description": "API response contract snapshot testing for Laravel — detects breaking changes before they reach production.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sead",
+            "email": "sead.dev.98@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/console": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "pestphp/pest": "^2.0|^3.0|^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sead\\ApiContract\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Sead\\ApiContract\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Sead\\ApiContract\\ApiContractServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

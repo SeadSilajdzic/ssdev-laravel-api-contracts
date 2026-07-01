@@ -1,0 +1,101 @@
+#!/bin/sh
+# API Contract pre-push hook — managed by sead/laravel-api-contract
+# Re-install with: php artisan api:contract:install
+
+TEST_PATH="{{TEST_PATH}}"
+TEST_FLAGS="{{TEST_FLAGS}}"
+UPDATE_ENV="{{UPDATE_ENV}}"
+
+# Locate PHP — works in Git Bash on Windows/Herd and standard Linux/Mac
+find_php() {
+    if command -v php >/dev/null 2>&1; then
+        echo "php"
+        return
+    fi
+    if command -v cmd >/dev/null 2>&1; then
+        if cmd //c php -r "echo 1;" >/dev/null 2>&1; then
+            echo "cmd //c php"
+            return
+        fi
+    fi
+    for dir in \
+        "$USERPROFILE/.config/herd/bin/php84" \
+        "$USERPROFILE/.config/herd/bin/php83" \
+        "$HOME/.config/herd/bin/php84" \
+        "$HOME/.config/herd/bin/php83"; do
+        dir_unix=$(echo "$dir" | sed 's|\\|/|g' | sed 's|^\([A-Za-z]\):|/\L\1|')
+        if [ -f "$dir_unix/php.exe" ]; then
+            echo "$dir_unix/php.exe"
+            return
+        fi
+    done
+    echo ""
+}
+
+PHP=$(find_php)
+
+if [ -z "$PHP" ]; then
+    echo ""
+    echo "WARNING: PHP binary not found — skipping API contract check."
+    echo ""
+    exit 0
+fi
+
+echo ""
+echo "Running API contract tests..."
+echo ""
+
+OUTPUT=$($PHP artisan test "$TEST_PATH" $TEST_FLAGS 2>&1)
+EXIT_CODE=$?
+
+echo "$OUTPUT"
+
+if [ $EXIT_CODE -eq 0 ]; then
+    echo ""
+    echo "API contract OK — push proceeding."
+    echo ""
+    exit 0
+fi
+
+VIOLATIONS=$(echo "$OUTPUT" | grep -E "✖ \[BREAKING\]|\+ \[NEW\]" | sed 's/^/  /')
+
+echo ""
+echo "-----------------------------------------------------------------------"
+echo " API contract tests FAILED."
+echo " One or more API responses changed shape or types."
+if [ -n "$VIOLATIONS" ]; then
+    echo ""
+    echo " Changes detected:"
+    echo "$VIOLATIONS"
+fi
+echo ""
+echo " If INTENTIONAL: run  php artisan api:contract:update"
+echo "   then commit the snapshot files and push again."
+echo ""
+echo " If ACCIDENTAL:  fix the code before pushing."
+echo "-----------------------------------------------------------------------"
+echo ""
+printf "Accept these changes and update snapshots now? (y/N) "
+read -r ANSWER </dev/tty
+
+if [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ]; then
+    echo ""
+    echo "Updating snapshots..."
+    $PHP artisan api:contract:update
+
+    if [ $? -ne 0 ]; then
+        echo "Snapshot update failed. Push aborted."
+        exit 1
+    fi
+
+    echo ""
+    echo "Snapshots updated. Commit and push:"
+    echo "  git add tests/snapshots/api/"
+    echo "  git commit -m 'contract: update API response snapshots'"
+    echo "  git push"
+    echo ""
+    exit 1
+fi
+
+echo "Push aborted."
+exit 1
