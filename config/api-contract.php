@@ -33,4 +33,13 @@ return [
      * Path (relative to base_path()) where git hooks are installed.
      */
     'hooks_dir' => '.githooks',
+
+    /*
+     * Optional closure returning a bearer token (or null) for authenticating
+     * generated contract tests. Called at test runtime, not at generation time.
+     *
+     * Example:
+     *   'auth' => fn () => \App\Models\User::factory()->create()->createToken('test')->plainTextToken,
+     */
+    'auth' => null,
 ];

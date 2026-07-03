@@ -170,9 +170,18 @@ class ApiContractGenerateCommand extends Command
         $lines[] = '';
         $lines[] = 'function contractHeaders(): array';
         $lines[] = '{';
-        $lines[] = '    // TODO: return authentication headers for your API';
-        $lines[] = "    // Example: return ['X-API-KEY' => 'key', 'X-API-SECRET' => 'secret'];";
-        $lines[] = "    return ['Accept' => 'application/json'];";
+        if (config('api-contract.auth') !== null) {
+            $lines[] = "    \$token = call_user_func(config('api-contract.auth'));";
+            $lines[] = '';
+            $lines[] = "    return \$token";
+            $lines[] = "        ? ['Authorization' => \"Bearer {\$token}\", 'Accept' => 'application/json']";
+            $lines[] = "        : ['Accept' => 'application/json'];";
+        } else {
+            $lines[] = '    // TODO: return authentication headers for your API';
+            $lines[] = "    // Example: return ['X-API-KEY' => 'key', 'X-API-SECRET' => 'secret'];";
+            $lines[] = "    // ...or set config('api-contract.auth') to a closure returning a bearer token.";
+            $lines[] = "    return ['Accept' => 'application/json'];";
+        }
         $lines[] = '}';
         $lines[] = '';
 

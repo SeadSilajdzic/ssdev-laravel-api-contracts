@@ -117,7 +117,7 @@ class ApiContractSnapshot
                     );
                 }
             } elseif (!is_array($actualShape) && !is_array($expectedShape)) {
-                if ($actualShape !== $expectedShape && $expectedShape !== 'null') {
+                if ($actualShape !== $expectedShape && $expectedShape !== 'null' && $actualShape !== 'null') {
                     $violations[] = [
                         'type'    => 'TYPE_CHANGED',
                         'path'    => $currentPath,
@@ -125,12 +125,15 @@ class ApiContractSnapshot
                     ];
                 }
             } elseif (is_array($actualShape) !== is_array($expectedShape)) {
-                $got = is_array($actualShape) ? 'object/array' : $actualShape;
-                $violations[] = [
-                    'type'    => 'TYPE_CHANGED',
-                    'path'    => $currentPath,
-                    'message' => "Type changed: '{$currentPath}' was '{$expectedShape}', now '{$got}'",
-                ];
+                if ($expectedShape !== 'null' && $actualShape !== 'null') {
+                    $was = is_array($expectedShape) ? 'object/array' : $expectedShape;
+                    $got = is_array($actualShape) ? 'object/array' : $actualShape;
+                    $violations[] = [
+                        'type'    => 'TYPE_CHANGED',
+                        'path'    => $currentPath,
+                        'message' => "Type changed: '{$currentPath}' was '{$was}', now '{$got}'",
+                    ];
+                }
             }
         }
 
@@ -154,7 +157,7 @@ class ApiContractSnapshot
             return self::compare($actual, $snapshot, $path);
         }
 
-        if (!is_array($actual) && !is_array($snapshot) && $actual !== $snapshot && $snapshot !== 'null') {
+        if (!is_array($actual) && !is_array($snapshot) && $actual !== $snapshot && $snapshot !== 'null' && $actual !== 'null') {
             return [[
                 'type'    => 'TYPE_CHANGED',
                 'path'    => $path,
@@ -163,6 +166,33 @@ class ApiContractSnapshot
         }
 
         return [];
+    }
+
+    /**
+     * Find dotted paths in an extracted shape where an array was empty,
+     * meaning the shape of its elements could not be captured.
+     */
+    public static function findEmptyArrayPaths(mixed $shape, string $path = ''): array
+    {
+        if (!is_array($shape)) {
+            return [];
+        }
+
+        if (array_is_list($shape)) {
+            if (empty($shape)) {
+                return [$path !== '' ? $path : '(root)'];
+            }
+
+            return self::findEmptyArrayPaths($shape[0], $path . '[]');
+        }
+
+        $paths = [];
+        foreach ($shape as $key => $value) {
+            $currentPath = $path ? "{$path}.{$key}" : $key;
+            $paths = array_merge($paths, self::findEmptyArrayPaths($value, $currentPath));
+        }
+
+        return $paths;
     }
 
     public static function hasBreakingViolations(array $violations): bool

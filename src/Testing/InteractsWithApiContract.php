@@ -30,6 +30,7 @@ trait InteractsWithApiContract
         $shape = ApiContractSnapshot::extractShape($responseData);
 
         if ($updating || !ApiContractSnapshot::exists($name)) {
+            $this->warnAboutEmptyArrays($name, $shape);
             ApiContractSnapshot::save($name, $shape);
             return;
         }
@@ -55,5 +56,22 @@ trait InteractsWithApiContract
         $this->fail(
             "\n\n  [{$name}] BREAKING API contract violation:\n{$formatted}\n\n  → Run: {$command}  (to accept intentional changes)\n"
         );
+    }
+
+    /**
+     * Warn (without failing) when the response contains empty arrays —
+     * their element shape can't be captured, so it won't be validated
+     * until a future snapshot update sees a non-empty response there.
+     */
+    private function warnAboutEmptyArrays(string $name, mixed $shape): void
+    {
+        $emptyPaths = ApiContractSnapshot::findEmptyArrayPaths($shape);
+
+        if (empty($emptyPaths)) {
+            return;
+        }
+
+        $list = implode(', ', $emptyPaths);
+        fwrite(STDOUT, "\n  [{$name}] Warning: empty array(s) at: {$list} — item shape not captured, will not be validated until a non-empty response is snapshotted.\n");
     }
 }

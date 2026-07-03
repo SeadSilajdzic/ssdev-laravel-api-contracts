@@ -144,7 +144,13 @@ If you answer `y`, snapshots are regenerated in place. You commit them and push 
 | `TYPE_CHANGED` | Field type changed (e.g. `integer` → `string`) | **Yes** |
 | `NEW` | Field added, not in snapshot | No |
 
-A `null` value in a snapshot is treated as "unknown type" — if the field later returns a real value, it is not flagged as a type change.
+A `null` value — in the snapshot or in the response — is treated as "unknown type" and never flags a type change on its own, in either direction. This covers nullable fields that happen to be `null` on the first captured request, or `null` on a later request.
+
+If a field's captured shape is an empty array, its element shape couldn't be determined — a warning is printed (test still passes) so it doesn't silently go unvalidated:
+
+```
+[GET_api_v1_products] Warning: empty array(s) at: data.products, tags — item shape not captured, will not be validated until a non-empty response is snapshotted.
+```
 
 ---
 
@@ -247,7 +253,20 @@ return [
     'update_env'   => 'API_CONTRACT_UPDATE',    // env var that triggers snapshot write
     'route_prefix' => 'api',                    // prefix for generate + coverage commands
     'hooks_dir'    => '.githooks',              // where hooks are installed
+    'auth'         => null,                     // closure returning a bearer token, see below
 ];
+```
+
+### Auto-authenticating generated tests
+
+If your API routes require auth, set `auth` to a closure that returns a bearer token. `api:contract:generate` will then emit a `contractHeaders()` that calls it automatically, instead of a manual TODO:
+
+```php
+// config/api-contract.php
+'auth' => fn () => \App\Models\User::factory()->create()->createToken('test')->plainTextToken,
+```
+
+The closure is called at test runtime (not at generation time), so it can freely touch the database.
 ```
 
 ---
