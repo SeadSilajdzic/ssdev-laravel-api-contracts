@@ -134,6 +134,22 @@ Accept these changes and update snapshots now? (y/N)
 
 If you answer `y`, snapshots are regenerated in place. You commit them and push again — the updated contract becomes part of the same push.
 
+### CI enforcement
+
+`core.hooksPath` is local git config — it isn't tracked in your repo, so a new contributor has
+no protection until they run `api:contract:install` themselves, and the hook can always be
+skipped with `git push --no-verify`. For real, server-side enforcement, generate a CI workflow
+alongside the hooks:
+
+```bash
+php artisan api:contract:install --ci=github     # → .github/workflows/api-contract.yml
+php artisan api:contract:install --ci=bitbucket  # → bitbucket-pipelines.yml
+php artisan api:contract:install --ci=gitlab     # → .gitlab-ci.yml
+```
+
+Any of these run the same contract test suite on every pull/merge request. Won't overwrite an
+existing workflow file without asking first.
+
 ---
 
 ## Violations
@@ -159,6 +175,9 @@ If a field's captured shape is an empty array, its element shape couldn't be det
 | Command | Description |
 |---|---|
 | `api:contract:install` | Install hooks, snapshot dir, git config |
+| `api:contract:install --ci=github` | Also generate a GitHub Actions workflow |
+| `api:contract:install --ci=bitbucket` | Also generate a Bitbucket Pipelines config |
+| `api:contract:install --ci=gitlab` | Also generate a GitLab CI config |
 | `api:contract:generate --prefix=api/v1` | Generate test stubs from routes |
 | `api:contract:generate --merge` | Add tests for new routes only |
 | `api:contract:update` | Regenerate all snapshots |
@@ -198,6 +217,28 @@ class ApiContractTest extends TestCase
     }
 }
 ```
+
+### Testing multiple response variants
+
+`assertMatchesApiContract()` takes an arbitrary string as the snapshot name, so if the same
+endpoint returns a different shape depending on who's calling it (e.g. an admin sees extra
+fields), you can track each variant as its own independent contract — just give each one a
+distinct name:
+
+```php
+it('GET /products matches contract (regular user)', function () {
+    $response = $this->actingAs($regularUser)->getJson('/api/v1/products');
+    $this->assertMatchesApiContract('GET_api_v1_products', $response->json());
+});
+
+it('GET /products matches contract (admin)', function () {
+    $response = $this->actingAs($admin)->getJson('/api/v1/products');
+    $this->assertMatchesApiContract('GET_api_v1_products__admin', $response->json());
+});
+```
+
+This produces two separate snapshot files, each validated independently — no conflict, no
+flip-flopping NEW/REMOVED noise depending on which variant ran last.
 
 ---
 
