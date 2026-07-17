@@ -42,4 +42,11 @@ return [
      *   'auth' => fn () => \App\Models\User::factory()->create()->createToken('test')->plainTextToken,
      */
     'auth' => null,
+
+    /*
+     * When false (default), only REMOVED and TYPE_CHANGED violations fail a test —
+     * new (additive) fields are reported but never block. When true, NEW fields
+     * fail the test too, requiring every response change to update the snapshot.
+     */
+    'strict' => false,
 ];

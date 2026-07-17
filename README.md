@@ -168,6 +168,21 @@ If a field's captured shape is an empty array, its element shape couldn't be det
 [GET_api_v1_products] Warning: empty array(s) at: data.products, tags — item shape not captured, will not be validated until a non-empty response is snapshotted.
 ```
 
+### Strict mode
+
+By default `NEW` never blocks — that's the point, additive changes shouldn't stop your workflow.
+Some teams want the opposite in certain branches (e.g. a versioned public API where every field
+addition needs a deliberate snapshot update before merge). Turn that on with:
+
+```php
+// config/api-contract.php
+'strict' => true,
+```
+
+With `strict` enabled, `NEW` is treated as breaking too — any response change at all fails the
+test until you run `api:contract:update` and commit the new snapshot. This is a config flag only,
+`ApiContractSnapshot::compare()` itself doesn't change.
+
 ---
 
 ## Commands
@@ -295,6 +310,7 @@ return [
     'route_prefix' => 'api',                    // prefix for generate + coverage commands
     'hooks_dir'    => '.githooks',              // where hooks are installed
     'auth'         => null,                     // closure returning a bearer token, see below
+    'strict'       => false,                    // when true, NEW fields fail tests too
 ];
 ```
 

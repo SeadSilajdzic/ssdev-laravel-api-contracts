@@ -43,7 +43,8 @@ trait InteractsWithApiContract
             return;
         }
 
-        $breaking  = ApiContractSnapshot::hasBreakingViolations($violations);
+        $strict    = (bool) config('api-contract.strict', false);
+        $breaking  = ApiContractSnapshot::hasBreakingViolations($violations, $strict);
         $formatted = ApiContractSnapshot::formatViolations($violations);
         $command   = 'php artisan api:contract:update';
 

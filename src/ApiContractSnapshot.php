@@ -195,10 +195,12 @@ class ApiContractSnapshot
         return $paths;
     }
 
-    public static function hasBreakingViolations(array $violations): bool
+    public static function hasBreakingViolations(array $violations, bool $strict = false): bool
     {
+        $breakingTypes = $strict ? ['REMOVED', 'TYPE_CHANGED', 'NEW'] : ['REMOVED', 'TYPE_CHANGED'];
+
         foreach ($violations as $v) {
-            if (in_array($v['type'], ['REMOVED', 'TYPE_CHANGED'], true)) {
+            if (in_array($v['type'], $breakingTypes, true)) {
                 return true;
             }
         }
